@@ -1,6 +1,6 @@
 # Breakout Game
 
-A simple **Breakout arcade game** built in Python using the built-in `turtle` graphics library.
+A simple Breakout arcade game built in Python using the built-in `turtle` graphics library.
 
 The player controls a paddle at the bottom of the screen and tries to destroy all the blocks by bouncing the ball off the paddle and walls.
 
@@ -18,7 +18,7 @@ The goal is simple:
 ## Features
 
 * Paddle controlled with the keyboard
-* Ball physics with horizontal and vertical bouncing
+* Ball movement and bouncing
 * Multiple rows of colored blocks
 * Custom color palette
 * Score tracking
@@ -28,12 +28,12 @@ The goal is simple:
 
 ## Technologies
 
-* **Python 3**
-* **Turtle Graphics**
+* Python 3
+* Turtle Graphics
 
 No external libraries are required for the graphical interface.
 
-##Project Structure
+## Project Structure
 
 ```text
 breakout/
@@ -43,19 +43,21 @@ breakout/
 ├── ball.py
 ├── block.py
 ├── scoreboard.py
-└── README.md
+├── README.md
+└── .gitignore
 ```
 
 ### Files
 
-| File            | Description                              |
-| --------------- | ---------------------------------------- |
-| `main.py`       | Main game loop and game setup            |
-| `paddle.py`     | Handles the player's paddle and movement |
-| `ball.py`       | Controls the ball and its movement       |
-| `block.py`      | Defines the blocks that can be destroyed |
-| `scoreboard.py` | Handles score, lives and game-over state |
-| `README.md`     | Project documentation                    |
+| File            | Description                                           |
+| --------------- | ----------------------------------------------------- |
+| `main.py`       | Main game loop and game setup                         |
+| `paddle.py`     | Handles the player's paddle and movement              |
+| `ball.py`       | Controls the ball and its movement                    |
+| `block.py`      | Defines the blocks that can be destroyed              |
+| `scoreboard.py` | Handles score, lives and game-over state              |
+| `README.md`     | Project documentation                                 |
+| `.gitignore`    | Specifies files that should not be uploaded to GitHub |
 
 ## Getting Started
 
@@ -77,14 +79,18 @@ cd YOUR-REPOSITORY
 python main.py
 ```
 
-> Depending on your Python installation, you may need to use `python3 main.py` instead.
+Depending on your Python installation, you may need to use:
+
+```bash
+python3 main.py
+```
 
 ## Controls
 
-| Key            | Action            |
-| -------------- | ----------------- |
-| Left Arrow     | Move paddle left  |
-| Right Arrow    | Move paddle right |
+| Key         | Action            |
+| ----------- | ----------------- |
+| Left Arrow  | Move paddle left  |
+| Right Arrow | Move paddle right |
 
 ## Scoring
 
@@ -94,9 +100,9 @@ The game also tracks the number of remaining lives.
 
 ## Game Window
 
-The game uses a **1200 × 900** window with a black background.
+The game uses a 1200 x 900 window with a black background.
 
-The blocks are arranged in multiple rows using a pink/red color palette:
+The blocks are arranged in multiple rows using the following color palette:
 
 ```text
 #590d22
