@@ -1,4 +1,4 @@
-from turtle import Screen, RawTurtle
+from turtle import Screen, RawTurtle, TPen
 from paddle import Paddle
 from ball import Ball
 from block import Block
@@ -10,11 +10,23 @@ BALL_HOME_POSITION = (0, -330)
 BLOCK_X_POSITION = -500
 BLOCK_Y_POSITION = 100
 BLOCKS = []
-COLORS = ["#590d22", "#800f2f", "#a4133c", "#c9184a", "#ff4d6d", "#ff758f", "#ff8fa3", "#ffb3c1", "#ffccd5", "#fff0f3"]
+COLORS = [
+    "#F2E94E",
+    "#F2C14E",
+    "#E76F51",
+    "#D62828",
+    "#9B5DE5",
+    "#00BBF9",
+    "#00F5D4",
+    "#70E000",
+    "#38B000",
+    "#FF6B35"
+]
+BLOCKS_DESTROYED = 0
 
 screen = Screen()
 screen.setup(width=1200, height=900)
-screen.bgcolor("black")
+screen.bgcolor("#111111")
 screen.title("Breakout")
 screen.tracer(0)
 
@@ -32,10 +44,12 @@ for color in COLORS:
     BLOCKS.append(row)
     BLOCK_Y_POSITION += 20
     BLOCK_X_POSITION = -500
+total_blocks = sum(len(row) for row in BLOCKS)
 
 screen.listen()
 screen.onkey(paddle.move_left, "Left")
 screen.onkey(paddle.move_right, "Right")
+screen.onkey(ball.start, "space")
 
 while scoreboard.lives > 0:
     screen.update()
@@ -45,23 +59,32 @@ while scoreboard.lives > 0:
         ball.bounce_x()
 
     if ball.ycor() < -330 and ball.distance(paddle) < 100:
-        ball.bounce_y()
+        ball.bounce_from_paddle(paddle)
 
     if ball.ycor() > 430:
         ball.bounce_y()
     for row in BLOCKS:
-        y = 61
         for block in row:
-            if ball.ycor() > y and ball.distance(block) < 50:
-                block.goto(10000, 10000)
-                block.hideturtle()
-                ball.bounce_y()
-                scoreboard.increase_score()
-        y += 25
+            if block.isvisible():
+                if (
+                    abs(ball.xcor() - block.xcor()) < 50
+                    and abs(ball.ycor() - block.ycor()) < 12
+                ):
+                    block.hideturtle()
+                    ball.bounce_y()
+                    scoreboard.increase_score()
+                    BLOCKS_DESTROYED += 1
+                    if BLOCKS_DESTROYED == total_blocks:
+                        scoreboard.win_game()
+                        break
+                    break
 
     if ball.ycor() < -470:
         scoreboard.decrease_lives()
-        ball.bounce_y()
-        ball.goto(BALL_HOME_POSITION)
-scoreboard.game_over()
+        if scoreboard.lives > 0:
+            ball.reset(BALL_HOME_POSITION)
+            paddle.goto(PADDLE_HOME_POSITION)
+        else:
+            scoreboard.game_over()
+
 screen.exitonclick()

@@ -5,6 +5,6 @@ class Block(Turtle):
         super().__init__()
         self.shape("square")
         self.penup()
-        self.shapesize(stretch_wid=1, stretch_len=5)
+        self.shapesize(stretch_wid=0.8, stretch_len=4.8)
         self.goto(position)
-        self.color("black", color)
+        self.color(color)
