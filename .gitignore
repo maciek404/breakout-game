@@ -1,6 +1,8 @@
 # Python cache
 __pycache__/
-*.py[cod]
+*.pyc
+*.pyo
+.Python
 
 # Virtual environments
 .venv/
@@ -13,9 +15,15 @@ env/
 # macOS
 .DS_Store
 
+# PyCharm
+.idea/
+
 # IDEs
 .vscode/
 .idea/
+
+# macOS
+.DS_Store
 
 # Testing
 .pytest_cache/
@@ -26,3 +34,6 @@ htmlcov/
 build/
 dist/
 *.egg-info/
+
+# Pygame / temporary files
+*.log
