@@ -1,90 +1,153 @@
-from turtle import Screen, RawTurtle, TPen
-from paddle import Paddle
-from ball import Ball
-from block import Block
-from scoreboard import Scoreboard
+import pygame
+import sys
+from settings import (SCREEN_WIDTH, SCREEN_HEIGHT, FPS, BG_COLOR, BALL_SPEED_INCREMENT, POWERUP_DURATION,
+                      BALL_SLOW_MULTIPLIER, TITLE_FONT_SIZE, SUBTITLE_FONT_SIZE, FONT_NAME, WHITE)
+from sprites.paddle import Paddle
+from sprites.ball import Ball
+from sprites.level import create_level
+from sprites.powerup import PowerUp
+from game_state import GameState
+from sound_manager import SoundManager
 
+pygame.init()
 
-PADDLE_HOME_POSITION = (0, -350)
-BALL_HOME_POSITION = (0, -330)
-BLOCK_X_POSITION = -500
-BLOCK_Y_POSITION = 100
-BLOCKS = []
-COLORS = [
-    "#F2E94E",
-    "#F2C14E",
-    "#E76F51",
-    "#D62828",
-    "#9B5DE5",
-    "#00BBF9",
-    "#00F5D4",
-    "#70E000",
-    "#38B000",
-    "#FF6B35"
-]
-BLOCKS_DESTROYED = 0
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("Breakout")
+clock = pygame.time.Clock()
 
-screen = Screen()
-screen.setup(width=1200, height=900)
-screen.bgcolor("#111111")
-screen.title("Breakout")
-screen.tracer(0)
+title_font = pygame.font.Font(FONT_NAME, TITLE_FONT_SIZE)
+subtitle_font = pygame.font.Font(FONT_NAME, SUBTITLE_FONT_SIZE)
 
-paddle = Paddle(PADDLE_HOME_POSITION)
-ball = Ball(BALL_HOME_POSITION)
-scoreboard = Scoreboard()
-for color in COLORS:
-    row = []
-    for _ in range(11):
-        position = (BLOCK_X_POSITION, BLOCK_Y_POSITION)
-        block = Block(position, color)
-        block.color('black', color)
-        BLOCK_X_POSITION += 100
-        row.append(block)
-    BLOCKS.append(row)
-    BLOCK_Y_POSITION += 20
-    BLOCK_X_POSITION = -500
-total_blocks = sum(len(row) for row in BLOCKS)
+def new_game_objects():
+    paddle = Paddle()
+    ball = Ball()
+    state = GameState()
+    bricks = create_level(state.level)
+    powerups = pygame.sprite.Group()
 
-screen.listen()
-screen.onkey(paddle.move_left, "Left")
-screen.onkey(paddle.move_right, "Right")
-screen.onkey(ball.start, "space")
+    all_sprites = pygame.sprite.Group()
+    all_sprites.add(paddle, ball)
 
-while scoreboard.lives > 0:
-    screen.update()
-    ball.move()
+    return paddle, ball, state, bricks, powerups, all_sprites
 
-    if ball.xcor() > 580 or ball.xcor() < -580:
-        ball.bounce_x()
+sounds = SoundManager()
 
-    if ball.ycor() < -330 and ball.distance(paddle) < 100:
-        ball.bounce_from_paddle(paddle)
+paddle, ball, state, bricks, powerups, all_sprites = new_game_objects()
 
-    if ball.ycor() > 430:
-        ball.bounce_y()
-    for row in BLOCKS:
-        for block in row:
-            if block.isvisible():
-                if (
-                    abs(ball.xcor() - block.xcor()) < 50
-                    and abs(ball.ycor() - block.ycor()) < 12
-                ):
-                    block.hideturtle()
-                    ball.bounce_y()
-                    scoreboard.increase_score()
-                    BLOCKS_DESTROYED += 1
-                    if BLOCKS_DESTROYED == total_blocks:
-                        scoreboard.win_game()
-                        break
-                    break
+app_state = "menu"
+level_transition_timer = 0
+ball_slow_end_time = 0
 
-    if ball.ycor() < -470:
-        scoreboard.decrease_lives()
-        if scoreboard.lives > 0:
-            ball.reset(BALL_HOME_POSITION)
-            paddle.goto(PADDLE_HOME_POSITION)
+def draw_text_center(text, font, color, y_offset=0):
+    surface = font.render(text, True, color)
+    rect = surface.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + y_offset))
+    screen.blit(surface, rect)
+
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+        if event.type == pygame.KEYDOWN:
+            if app_state == "menu" and event.key == pygame.K_SPACE:
+                app_state = "playing"
+
+            elif app_state == "playing" and event.key in (pygame.K_p, pygame.K_ESCAPE):
+                app_state = "paused"
+
+            elif app_state == "paused" and event.key in (pygame.K_p, pygame.K_ESCAPE):
+                app_state = "playing"
+
+            elif app_state == "game_over" and event.key == pygame.K_r:
+                paddle, ball, state, bricks, powerups, all_sprites = new_game_objects()
+                level_transition_timer = 0
+                ball_slow_end_time = 0
+                app_state = "playing"
+
+    # ----------------------- GAME LOGIC --------------------------
+    if app_state == "playing":
+        if level_transition_timer > 0:
+            level_transition_timer -= 1
         else:
-            scoreboard.game_over()
+            all_sprites.update()
+            powerups.update()
 
-screen.exitonclick()
+            if pygame.sprite.collide_rect(ball, paddle) and ball.speed_y > 0:
+                ball.bounce_off_paddle(paddle)
+                sounds.play("bounce")
+
+            hit_brick = pygame.sprite.spritecollide(ball, bricks, dokill=True)
+            if hit_brick:
+                ball.speed_y *= -1
+                sounds.play("brick_break")
+                for brick in hit_brick:
+                    state.add_score(brick.points)
+                    if brick.drops_powerup:
+                        powerups.add(PowerUp(brick.rect.centerx, brick.rect.centery))
+
+            caught_powerups = pygame.sprite.spritecollide(paddle, powerups, dokill=True)
+            for pu in caught_powerups:
+                sounds.play("powerup")
+                if pu.type == "widen":
+                    paddle.apply_widen(POWERUP_DURATION)
+                elif pu.type == "life":
+                    state.lives += 1
+                elif pu.type == "slow":
+                    ball.speed_x *= BALL_SLOW_MULTIPLIER
+                    ball.speed_y *= BALL_SLOW_MULTIPLIER
+                    ball_slow_end_time = pygame.time.get_ticks() + POWERUP_DURATION
+
+            if ball_slow_end_time and pygame.time.get_ticks() > ball_slow_end_time:
+                ball.speed_x /= BALL_SLOW_MULTIPLIER
+                ball.speed_y /= BALL_SLOW_MULTIPLIER
+                ball_slow_end_time = 0
+
+            if ball.rect.top > SCREEN_HEIGHT:
+                is_game_over = state.lose_life()
+                if is_game_over:
+                    app_state = "game_over"
+                    sounds.play("game_over")
+                else:
+                    sounds.play("life_lost")
+                    ball.reset()
+
+            if len(bricks) == 0:
+                state.next_level()
+                bricks = create_level(state.level)
+                ball.reset()
+                ball.speed_x += BALL_SPEED_INCREMENT if ball.speed_x > 0 else -BALL_SPEED_INCREMENT
+                ball.speed_y -= BALL_SPEED_INCREMENT
+                level_transition_timer = FPS
+
+    # ------------------------- DRAWING -------------------------
+    screen.fill(BG_COLOR)
+
+    if app_state == "menu":
+        draw_text_center("BREAKOUT", title_font, WHITE, y_offset=-40)
+        draw_text_center("Press SPACE to start", subtitle_font, WHITE, y_offset=20)
+        draw_text_center("Control: ← → or A / D | Pause: P", subtitle_font, WHITE, y_offset=60)
+
+    elif app_state in ("playing", "paused"):
+        all_sprites.draw(screen)
+        bricks.draw(screen)
+        powerups.draw(screen)
+        state.draw(screen)
+
+        if level_transition_timer > 0:
+            draw_text_center(f"Level {state.level + 1}", title_font, WHITE)
+
+        if app_state == "paused":
+            draw_text_center("PAUSED", title_font, WHITE, y_offset=-20)
+            draw_text_center("Press P to continue", subtitle_font, WHITE, y_offset=30)
+
+    elif app_state == "game_over":
+        draw_text_center("GAME OVER", title_font, (255, 80, 80), y_offset=-40)
+        draw_text_center(f"Score: {state.score}", subtitle_font, WHITE, y_offset=10)
+        draw_text_center("Press R to play again", subtitle_font, WHITE, y_offset=50)
+
+    pygame.display.flip()
+    clock.tick(FPS)
+
+pygame.quit()
+sys.exit()
