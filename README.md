@@ -1,6 +1,6 @@
 # Breakout
 
-A classic Breakout (Arkanoid) game built in Python using the Pygame library. This project was created as a practice exercise after completing a Python programming course.
+A classic Breakout (Arkanoid) game built in Python using the Pygame library, featuring a modern visual style with gradient backgrounds, rounded shapes, and a pixel-art font. This project was created as a practice exercise after completing a Python programming course.
 
 ## Features
 
@@ -12,6 +12,7 @@ A classic Breakout (Arkanoid) game built in Python using the Pygame library. Thi
 - Sound effects
 - Pause functionality
 - Start screen and game over screen with restart option
+- Modern visual style: gradient background, rounded paddle/bricks/power-ups, paddle glow effect, pixel-art (retro-gaming) font
 
 ## Controls
 
@@ -52,7 +53,7 @@ python main.py
 ```
 breakout/
 ├── main.py               # Main game loop and logic
-├── settings.py            # Configuration (colors, sizes, speeds)
+├── settings.py            # Configuration (colors, sizes, speeds, fonts)
 ├── game_state.py           # Score, lives, and level management
 ├── sound_manager.py         # Sound effects management
 ├── sprites/
@@ -62,7 +63,8 @@ breakout/
 │   ├── powerup.py           # Power-up class
 │   └── level.py             # Level layout definitions
 ├── assets/
-│   └── sounds/             # Sound effects
+│   ├── sounds/             # Sound effects
+│   └── fonts/              # Pixel-art font (Press Start 2P)
 ├── requirements.txt
 └── README.md
 ```
@@ -71,6 +73,7 @@ breakout/
 
 - Python 3
 - [Pygame Community Edition](https://pyga.me/)
+- [Press Start 2P](https://fonts.google.com/specimen/Press+Start+2P) font
 
 ## What I Learned
 
@@ -79,6 +82,7 @@ breakout/
 - Game state management (state machine: menu / playing / paused / game over)
 - Real-time timers (`pygame.time.get_ticks()`)
 - Sound handling in Pygame
+- Basic visual polish techniques (gradient backgrounds, rounded shapes with `border_radius`, glow effects with alpha transparency)
 - Debugging (including the difference between `is` and `in`, and audio mixer initialization issues)
 
 ## Possible Future Improvements

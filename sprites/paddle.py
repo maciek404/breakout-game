@@ -1,14 +1,13 @@
 import pygame
 from settings import (SCREEN_WIDTH, SCREEN_HEIGHT, PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_SPEED, PADDLE_COLOR,
-                      PADDLE_Y_OFFSET, PADDLE_WIDEN_MULTIPLIER)
+                      PADDLE_Y_OFFSET, PADDLE_WIDEN_MULTIPLIER, PADDLE_RADIUS)
 
 class Paddle(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
 
         self.base_width = PADDLE_WIDTH
-        self.image = pygame.Surface((PADDLE_WIDTH, PADDLE_HEIGHT))
-        self.image.fill(PADDLE_COLOR)
+        self.image = self._draw_image(PADDLE_WIDTH)
 
         self.rect = self.image.get_rect()
         self.rect.centerx = SCREEN_WIDTH // 2
@@ -16,6 +15,15 @@ class Paddle(pygame.sprite.Sprite):
 
         self.speed = PADDLE_SPEED
         self.widen_end_time = 0
+
+    def _draw_image(self, width):
+        surface = pygame.Surface((width, PADDLE_HEIGHT), pygame.SRCALPHA)
+        pygame.draw.rect(
+            surface, PADDLE_COLOR,
+            (0, 0, width, PADDLE_HEIGHT),
+            border_radius=PADDLE_RADIUS
+        )
+        return surface
 
     def update(self):
         keys = pygame.key.get_pressed()
@@ -40,7 +48,6 @@ class Paddle(pygame.sprite.Sprite):
 
     def set_width(self, new_width):
         center = self.rect.center
-        self.image = pygame.Surface((new_width, PADDLE_HEIGHT))
-        self.image.fill(PADDLE_COLOR)
+        self.image = self._draw_image(new_width)
         self.rect = self.image.get_rect()
         self.rect.center = center

@@ -1,7 +1,8 @@
 import pygame
 import sys
-from settings import (SCREEN_WIDTH, SCREEN_HEIGHT, FPS, BG_COLOR, BALL_SPEED_INCREMENT, POWERUP_DURATION,
-                      BALL_SLOW_MULTIPLIER, TITLE_FONT_SIZE, SUBTITLE_FONT_SIZE, FONT_NAME, WHITE)
+from settings import (SCREEN_WIDTH, SCREEN_HEIGHT, FPS, BALL_SPEED_INCREMENT, POWERUP_DURATION,
+                      BALL_SLOW_MULTIPLIER, TITLE_FONT_SIZE, SUBTITLE_FONT_SIZE, FONT_NAME, WHITE, GRADIENT_TOP,
+                      GRADIENT_BOTTOM, BALL_START_OFFSET)
 from sprites.paddle import Paddle
 from sprites.ball import Ball
 from sprites.level import create_level
@@ -11,16 +12,30 @@ from sound_manager import SoundManager
 
 pygame.init()
 
+def create_gradient_background(width, height, top_color, bottom_color):
+    gradient = pygame.Surface((width, height))
+    for y in range(height):
+        ratio = y / height
+        r = top_color[0] + (bottom_color[0] - top_color[0]) * ratio
+        g = top_color[1] + (bottom_color[1] - top_color[1]) * ratio
+        b = top_color[2] + (bottom_color[2] - top_color[2]) * ratio
+        pygame.draw.line(gradient, (int(r), int(g), int(b)), (0, y), (width, y))
+    return gradient
+
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+background = create_gradient_background(SCREEN_WIDTH, SCREEN_HEIGHT, GRADIENT_TOP, GRADIENT_BOTTOM)
 pygame.display.set_caption("Breakout")
 clock = pygame.time.Clock()
 
 title_font = pygame.font.Font(FONT_NAME, TITLE_FONT_SIZE)
 subtitle_font = pygame.font.Font(FONT_NAME, SUBTITLE_FONT_SIZE)
 
+def ball_start_position(paddle):
+    return (paddle.rect.centerx, paddle.rect.top - BALL_START_OFFSET)
+
 def new_game_objects():
     paddle = Paddle()
-    ball = Ball()
+    ball = Ball(ball_start_position(paddle))
     state = GameState()
     bricks = create_level(state.level)
     powerups = pygame.sprite.Group()
@@ -110,18 +125,18 @@ while running:
                     sounds.play("game_over")
                 else:
                     sounds.play("life_lost")
-                    ball.reset()
+                    ball.reset(ball_start_position(paddle))
 
             if len(bricks) == 0:
                 state.next_level()
                 bricks = create_level(state.level)
-                ball.reset()
+                ball.reset(ball_start_position(paddle))
                 ball.speed_x += BALL_SPEED_INCREMENT if ball.speed_x > 0 else -BALL_SPEED_INCREMENT
                 ball.speed_y -= BALL_SPEED_INCREMENT
                 level_transition_timer = FPS
 
     # ------------------------- DRAWING -------------------------
-    screen.fill(BG_COLOR)
+    screen.blit(background, (0,0))
 
     if app_state == "menu":
         draw_text_center("BREAKOUT", title_font, WHITE, y_offset=-40)
@@ -129,6 +144,9 @@ while running:
         draw_text_center("Control: ← → or A / D | Pause: P", subtitle_font, WHITE, y_offset=60)
 
     elif app_state in ("playing", "paused"):
+        glow_surface = pygame.Surface((paddle.rect.width + 20, 20), pygame.SRCALPHA)
+        pygame.draw.ellipse(glow_surface, (0, 220, 200, 40), glow_surface.get_rect())
+        screen.blit(glow_surface, (paddle.rect.centerx - glow_surface.get_width() // 2, paddle.rect.bottom - 5))
         all_sprites.draw(screen)
         bricks.draw(screen)
         powerups.draw(screen)

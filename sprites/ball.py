@@ -3,7 +3,7 @@ import random
 from settings import SCREEN_WIDTH, SCREEN_HEIGHT, BALL_RADIUS, BALL_SPEED, BALL_COLOR
 
 class Ball(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, start_pos):
         super().__init__()
 
         diameter = BALL_RADIUS * 2
@@ -11,7 +11,7 @@ class Ball(pygame.sprite.Sprite):
         pygame.draw.circle(self.image, BALL_COLOR, (BALL_RADIUS, BALL_RADIUS), BALL_RADIUS)
 
         self.rect = self.image.get_rect()
-        self.rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
+        self.rect.center = start_pos
 
         self.speed_x = BALL_SPEED * random.choice([-1, 1])
         self.speed_y = -BALL_SPEED
@@ -46,7 +46,7 @@ class Ball(pygame.sprite.Sprite):
         self.speed_x = BALL_SPEED * offset
         self.speed_y = -abs(self.speed_y)
 
-    def reset(self):
-        self.rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
+    def reset(self, start_pos):
+        self.rect.center = start_pos
         self.speed_x = BALL_SPEED * random.choice([-1, 1])
         self.speed_y = -BALL_SPEED
